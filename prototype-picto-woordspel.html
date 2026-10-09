@@ -1,0 +1,602 @@
+<title>Picto Woordspel</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Baloo+2:wght@600;800&display=swap">
+<style>
+/* Layout: one calm screen at a time. White picto cards with a thick black edge sit on a quiet ground; the picto is always the loudest thing on screen. */
+:root{
+  --bg:#DCEBE7; --surface:#F1F7F5; --fg:#17302D; --muted:#506965; --line:#B3CAC5;
+  --accent:#1B7566; --accent-fg:#FFFFFF; --hot:#C2402E; --good:#2A9A62; --sun:#F2B62B;
+  --paper:#FFFFFF; --paper-ink:#1B1F24; --back:#3F6FB0; --tile-ink:#17302D;
+  --t1:#F6CD63; --t2:#8ECDBF; --t3:#A9BCEB; --t4:#F3AE86;
+  --font-display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --font-body:"Andika",Verdana,system-ui,sans-serif;
+  --r:18px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#10211F; --surface:#1A322F; --fg:#E7F2EF; --muted:#9FBAB5; --line:#34554F;
+  --accent:#5FC7B5; --accent-fg:#0B1D1B; --hot:#F07C6C; --good:#4CC489; --sun:#F6C445; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#10211F; --surface:#1A322F; --fg:#E7F2EF; --muted:#9FBAB5; --line:#34554F;
+  --accent:#5FC7B5; --accent-fg:#0B1D1B; --hot:#F07C6C; --good:#4CC489; --sun:#F6C445; color-scheme:dark }
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:17px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+svg.i{width:1.4em;height:1.4em;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+svg.i.f{fill:currentColor;stroke:none}
+
+#app{min-height:100%;max-width:1080px;margin-inline:auto;padding-inline:16px;padding-block:14px 24px;display:flex;flex-direction:column;gap:18px}
+
+/* top bar */
+.bar{display:flex;align-items:center;gap:12px;min-height:52px}
+.bar h1{font-family:var(--font-display);font-weight:800;font-size:clamp(26px,5vw,40px);line-height:1;margin:0;text-wrap:balance;min-width:0}
+.bar .sub{color:var(--muted);font-size:15px}
+.sp{flex:1}
+.ib{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;border-radius:999px;border:2px solid var(--fg);background:transparent;font-weight:700}
+.ib.round{width:52px;padding:0;justify-content:center}
+.tag{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--sun);color:var(--tile-ink);border-radius:999px;padding:3px 10px}
+
+/* picto card */
+.pc{background:var(--paper);color:var(--paper-ink);border:4px solid var(--paper-ink);border-radius:var(--r);padding:clamp(6px,1.4vw,12px);display:flex;flex-direction:column;gap:2px;position:relative;min-width:0;transition:opacity .25s,box-shadow .2s,transform .2s}
+.pc img{display:block;flex:none;width:100%;height:auto;aspect-ratio:1;object-fit:contain;pointer-events:none;user-select:none}
+.pc .w{font-weight:700;text-align:center;font-size:clamp(14px,2.3vw,22px);line-height:1.15;overflow-wrap:anywhere}
+.pc.ok{box-shadow:0 0 0 6px var(--good)}
+.pc.no{opacity:.28;pointer-events:none}
+.pc.sel{box-shadow:0 0 0 6px var(--sun);transform:scale(1.03)}
+.pc.found{opacity:.5;box-shadow:0 0 0 5px var(--good);pointer-events:none}
+.wob{animation:wob .4s}
+@keyframes wob{25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+.bk,.mc .face{background:radial-gradient(circle,rgba(255,255,255,.4) 0 16%,transparent 17%) 0 0/33.34% 33.34%,var(--back)}
+
+/* home */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.tile{background:var(--tc);color:var(--tile-ink);border:4px solid var(--paper-ink);border-radius:26px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.tile:active{transform:scale(.98)}
+.prev{display:flex;gap:8px;justify-content:center;width:100%}
+.mini{width:min(46%,112px);aspect-ratio:1;padding:6px;border-width:3px;border-radius:14px;justify-content:center;align-items:center}
+.mini.spk{background:var(--paper)}
+.mini.spk svg{width:60%;height:60%}
+.tn{font-family:var(--font-display);font-weight:800;font-size:clamp(19px,2.6vw,24px);line-height:1.05}
+.ts{font-size:14px;margin-top:-4px}
+h2{font-family:var(--font-display);font-weight:800;font-size:22px;margin:0}
+.hint{color:var(--muted);font-size:15px;margin:0;max-width:65ch}
+.strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px}
+.strip .pc{border-width:3px;border-radius:14px;padding:6px}
+.strip .w{font-size:14px}
+.empty{background:var(--surface);border:2px dashed var(--line);border-radius:var(--r);padding:28px 20px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+
+/* game */
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(12px,3vh,26px)}
+.ask{margin:0;font-size:clamp(17px,2.6vw,22px);font-weight:700;text-align:center}
+.target{width:min(42vw,30vh,240px)}
+.choices{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:clamp(10px,2.4vw,22px);width:min(100%,calc(var(--n) * min(210px,32vh)))}
+.dots{display:flex;gap:4px;color:var(--line);flex-wrap:wrap}
+.dots svg{width:26px;height:26px}
+.dots .on{color:var(--sun)}
+.speak{width:clamp(96px,22vh,150px);aspect-ratio:1;border-radius:50%;border:4px solid var(--paper-ink);background:var(--sun);color:var(--tile-ink);display:grid;place-items:center}
+.speak svg{width:56%;height:56%}
+.speak:active{transform:scale(.96)}
+.mem{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));gap:clamp(8px,1.6vw,16px);width:min(100%,calc((100vh - 190px) * var(--cols,3) / var(--rows,2)),calc(var(--cols,3) * 190px))}
+.mc .face{position:absolute;inset:0;border-radius:calc(var(--r) - 5px);opacity:0;transition:opacity .2s}
+.mc.down .face{opacity:1}
+.donebox{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center}
+.donebox h1{font-family:var(--font-display);font-weight:800;font-size:clamp(34px,8vw,60px);margin:0}
+.bigstars{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;color:var(--sun)}
+.bigstars svg{width:clamp(34px,8vw,58px);height:clamp(34px,8vw,58px)}
+.rowbtn{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 16px;border-radius:999px;border:2px solid var(--fg);background:transparent;font-weight:700;font-size:16px;white-space:nowrap}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.big{min-height:60px;padding:0 26px;font-size:20px}
+.btn.sq{width:46px;padding:0}
+.btn.on{background:var(--hot);border-color:var(--hot);color:var(--accent-fg)}
+.btn.quiet{border-color:var(--line);color:var(--muted)}
+
+/* teacher */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+.field{display:flex;flex-direction:column;gap:4px;max-width:420px}
+.field label,.lab{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+input[type=text],input[type=email],input[type=password],select{min-height:46px;border:2px solid var(--line);border-radius:12px;background:var(--bg);padding:0 12px;width:100%;min-width:0;font-weight:700}
+.note{border-left:4px solid var(--sun);padding:6px 12px;margin:0;max-width:70ch}
+.rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px 14px;align-items:center;padding-block:12px;border-top:1px solid var(--line)}
+.thumbs{display:flex;gap:6px}
+.th{width:64px;border-width:2px;border-radius:10px;padding:4px}
+.mid{display:flex;flex-direction:column;gap:5px;min-width:0}
+.st{font-size:14px;color:var(--muted);display:flex;gap:6px 10px;flex-wrap:wrap;align-items:center}
+.st .own{color:var(--good);font-weight:700}
+.flag{color:var(--hot);font-weight:700}
+.chk{display:inline-flex;gap:8px;align-items:center;font-size:15px}
+.chk input{width:20px;height:20px;accent-color:var(--accent)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.seg{display:inline-flex;border:2px solid var(--fg);border-radius:999px;overflow:hidden}
+.seg button{min-width:52px;min-height:44px;border:0;background:transparent;font-weight:700}
+.seg button[aria-pressed=true]{background:var(--fg);color:var(--bg)}
+.set{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center}
+@media (max-width:620px){
+  .row{grid-template-columns:auto minmax(0,1fr)}
+  .acts{grid-column:1/-1;justify-content:flex-start}
+  .choices[data-n="4"]{grid-template-columns:repeat(2,minmax(0,1fr));width:min(100%,56vh,330px)}
+  .ib .t{display:none}.ib{padding:0 14px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<svg aria-hidden="true" style="position:absolute;width:0;height:0">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></symbol>
+  <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z"/><path d="M15.5 9a4.2 4.2 0 010 6M18 6.5a7.8 7.8 0 010 11"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0013 0M12 18v3"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="1.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 16V5M7.5 9.5L12 5l4.5 4.5M5 19h14"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-again" viewBox="0 0 24 24"><path d="M19 12a7 7 0 11-2.3-5.2M19 4.5v4.2h-4.2"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8.5H4z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></symbol>
+</svg>
+
+<div id="app"></div>
+
+<script>
+(()=>{
+'use strict';
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const uid=()=>{try{if(crypto.randomUUID)return crypto.randomUUID()}catch(e){}return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16)})};
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const ico=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const SIZE=384, SHADE=[43,51,64], LIKE=.9;
+/* Central storage: filled in by the hosted build. Left empty, the app keeps everything on this device. */
+const CONFIG=window.PICTO_CONFIG||{url:'',key:''};
+const sb=(CONFIG.url&&CONFIG.key&&window.supabase)?window.supabase.createClient(CONFIG.url,CONFIG.key):null;
+const central=!!sb;
+const C={busy:0,err:'',teacher:false,pinned:false,themes:[],loginErr:''};
+
+/* ---------- text ---------- */
+const L={
+nl:{count:n=>n+(n===1?' woord':' woorden'),example:'Voorbeeld',teacher:'Juf',back:'Terug',
+ gShadow:'Zoek de schaduw',gSame:'Zoek dezelfde',subOpen:'kaarten open',subClosed:'kaarten dicht',gListen:'Luister en kies',
+ ourWords:'Onze woorden',tapHear:'Tik op een picto om het woord te horen.',
+ askShadow:'Welke schaduw hoort erbij?',askSame:'Zoek twee dezelfde.',askListen:'Luister. Welke is het?',
+ again:'Nog een keer',other:'Ander spel',done:'Goed gedaan!',replay:'Nog eens luisteren',card:'Kaart',shadowN:'Schaduw',
+ tTitle:'Woorden van deze maand',theme:'Thema',themePh:'bv. Herfst',add:'Pictos toevoegen',
+ addHint:'Kies alle pictos van de maand tegelijk. De bestandsnaam wordt het woord: appel.png wordt “appel”. Je kan het woord daarna nog aanpassen.',
+ exampleNote:'Je ziet nu voorbeeldpictos. Zodra je eigen pictos toevoegt, verdwijnen ze.',
+ addAudio:'Geluidsbestanden toevoegen',
+ micBlocked:'Opnemen met de microfoon kan op deze pagina niet. Kies een geluidsbestand per woord, of voeg alle geluiden tegelijk toe (appel.m4a hoort bij “appel”). In het losse app-bestand werkt opnemen wel.',
+ rec:'Opnemen',stop:'Stop',play:'Luister',file:'Geluidsbestand kiezen',delAudio:'Opname wissen',delWord:'Woord verwijderen',
+ own:'Opname van de juf',tts:'Computerstem, nog geen opname',none:'Nog geen opname',
+ inShadow:'In schaduwspel',flagEmpty:'Schaduw is bijna leeg',flagBg:'Achtergrond is niet wit',flagLike:n=>'Schaduw lijkt op '+n,
+ settings:'Instellingen',choices:'Aantal keuzes',showWords:'Woord onder de picto tonen',ding:'Geluidje bij een goed antwoord',lang:'Taal',
+ loadSample:'Voorbeeld terugzetten',clear:'Alles wissen',sure:'Zeker? Tik nog eens',
+ empty:'Nog geen pictos',emptyHint:'Ga naar Juf en voeg de pictos van deze maand toe.',
+ failed:n=>n+' bestand(en) konden niet gelezen worden.',matched:(a,b)=>a+' van '+b+' geluiden gekoppeld aan een woord.',
+ recN:(a,b)=>a+' van '+b+' woorden hebben een opname',saved:'Alles blijft bewaard op dit toestel.',word:'Woord',
+ loginTitle:'Aanmelden als juf',email:'E-mailadres',pw:'Wachtwoord',signIn:'Aanmelden',signOut:'Afmelden',
+ loginErr:'Aanmelden is niet gelukt. Controleer het e-mailadres en het wachtwoord.',notTeacher:'Dit account mag de woorden niet aanpassen.',
+ themeSel:'Thema kiezen',newTheme:'Nieuw thema',makeActive:'Klaarzetten voor de klas',isActive:'Staat klaar voor de klas',notActive:'Nog niet klaargezet',
+ busy:'Bezig…',savedAll:'Bewaard voor alle toestellen',saveErr:'Bewaren is niet gelukt. Controleer de internetverbinding en probeer opnieuw.',
+ loading:'Laden…',noTheme:'Nog geen thema',noThemeHint:'De juf heeft nog geen thema klaargezet.',delTheme:'Thema verwijderen',unnamed:'(zonder naam)',
+ savedCentral:'Thema’s, pictos en opnames worden centraal bewaard. De instellingen hierboven gelden alleen voor dit toestel.'},
+en:{count:n=>n+(n===1?' word':' words'),example:'Example',teacher:'Teacher',back:'Back',
+ gShadow:'Find the shadow',gSame:'Find the same',subOpen:'cards open',subClosed:'cards closed',gListen:'Listen and choose',
+ ourWords:'Our words',tapHear:'Tap a picto to hear the word.',
+ askShadow:'Which shadow belongs to it?',askSame:'Find two that are the same.',askListen:'Listen. Which one is it?',
+ again:'Play again',other:'Other game',done:'Well done!',replay:'Listen again',card:'Card',shadowN:'Shadow',
+ tTitle:'Words of this month',theme:'Theme',themePh:'e.g. Autumn',add:'Add pictos',
+ addHint:'Select all pictos of the month at once. The file name becomes the word: appel.png becomes “appel”. You can still edit the word afterwards.',
+ exampleNote:'These are example pictos. They disappear as soon as you add your own.',
+ addAudio:'Add sound files',
+ micBlocked:'Recording with the microphone is not possible on this page. Choose a sound file per word, or add all sounds at once (appel.m4a goes with “appel”). Recording does work in the standalone app file.',
+ rec:'Record',stop:'Stop',play:'Listen',file:'Choose sound file',delAudio:'Delete recording',delWord:'Remove word',
+ own:'Teacher’s recording',tts:'Computer voice, no recording yet',none:'No recording yet',
+ inShadow:'In shadow game',flagEmpty:'Shadow is almost empty',flagBg:'Background is not white',flagLike:n=>'Shadow looks like '+n,
+ settings:'Settings',choices:'Number of choices',showWords:'Show the word under the picto',ding:'Soft sound on a correct answer',lang:'Language',
+ loadSample:'Restore example',clear:'Delete everything',sure:'Sure? Tap again',
+ empty:'No pictos yet',emptyHint:'Go to Teacher and add this month’s pictos.',
+ failed:n=>n+' file(s) could not be read.',matched:(a,b)=>a+' of '+b+' sounds linked to a word.',
+ recN:(a,b)=>a+' of '+b+' words have a recording',saved:'Everything stays saved on this device.',word:'Word',
+ loginTitle:'Sign in as teacher',email:'Email address',pw:'Password',signIn:'Sign in',signOut:'Sign out',
+ loginErr:'Signing in failed. Check the email address and the password.',notTeacher:'This account is not allowed to change the words.',
+ themeSel:'Choose theme',newTheme:'New theme',makeActive:'Make ready for the class',isActive:'Ready for the class',notActive:'Not made ready yet',
+ busy:'Working…',savedAll:'Saved for all devices',saveErr:'Saving failed. Check the internet connection and try again.',
+ loading:'Loading…',noTheme:'No theme yet',noThemeHint:'The teacher has not made a theme ready yet.',delTheme:'Delete theme',unnamed:'(no name)',
+ savedCentral:'Themes, pictos and recordings are stored centrally. The settings above apply to this device only.'}
+};
+const t=(k,...a)=>{const v=(L[state.lang]||L.nl)[k];return typeof v==='function'?v(...a):v};
+
+/* ---------- state ---------- */
+let state={lang:'nl',theme:'',themeId:null,active:false,stamp:'',sample:false,choices:3,showWords:true,ding:true,words:[]};
+let view='home',game=null,micBlocked=false,rec=null,note='',sureAt=0,loadMsg='';
+const word=id=>state.words.find(w=>w.id===id);
+const hasTTS='speechSynthesis' in window;
+
+const DB={
+ open(){return new Promise((res,rej)=>{try{const r=indexedDB.open('picto-woordspel',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})},
+ async get(k){const d=await this.open();return new Promise((res,rej)=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})},
+ async set(k,v){const d=await this.open();return new Promise((res,rej)=>{const x=d.transaction('kv','readwrite');x.objectStore('kv').put(v,k);x.oncomplete=res;x.onerror=()=>rej(x.error)})}
+};
+let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{DB.set(central?'cpack':'pack',state).catch(()=>{})},300)}
+
+/* ---------- picto import: fit on white, erase the white from the edges, keep the rest as the shadow ---------- */
+function fit(src){
+ const c=document.createElement('canvas');c.width=c.height=SIZE;const x=c.getContext('2d',{willReadFrequently:true});
+ x.fillStyle='#fff';x.fillRect(0,0,SIZE,SIZE);
+ const iw=src.naturalWidth||src.width,ih=src.naturalHeight||src.height,s=Math.min((SIZE-16)/iw,(SIZE-16)/ih),w=iw*s,h=ih*s;
+ x.imageSmoothingQuality='high';x.drawImage(src,(SIZE-w)/2,(SIZE-h)/2,w,h);return c;
+}
+function analyse(c){
+ const x=c.getContext('2d',{willReadFrequently:true}),w=c.width,h=c.height,p=x.getImageData(0,0,w,h).data,n=w*h;
+ const white=i=>{const o=i<<2;return p[o+3]<24||(p[o]>=226&&p[o+1]>=226&&p[o+2]>=226)};
+ const bg=new Uint8Array(n),st=new Int32Array(n);let sp=0;
+ const push=i=>{if(!bg[i]&&white(i)){bg[i]=1;st[sp++]=i}};
+ for(let X=0;X<w;X++){push(X);push((h-1)*w+X)}
+ for(let Y=0;Y<h;Y++){push(Y*w);push(Y*w+w-1)}
+ while(sp){const i=st[--sp],X=i%w;if(X>0)push(i-1);if(X<w-1)push(i+1);if(i>=w)push(i-w);if(i<n-w)push(i+w)}
+ const sc=document.createElement('canvas');sc.width=w;sc.height=h;const sx=sc.getContext('2d'),out=sx.createImageData(w,h),q=out.data;
+ let cnt=0,x0=w,y0=h,x1=0,y1=0;
+ for(let i=0;i<n;i++){if(bg[i])continue;cnt++;const o=i<<2;q[o]=SHADE[0];q[o+1]=SHADE[1];q[o+2]=SHADE[2];q[o+3]=255;const X=i%w,Y=i/w|0;if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y}
+ sx.putImageData(out,0,0);
+ const G=24;let sig='';
+ if(cnt){for(let gy=0;gy<G;gy++)for(let gx=0;gx<G;gx++){const X=Math.min(w-1,x0+((gx+.5)/G)*(x1-x0+1)|0),Y=Math.min(h-1,y0+((gy+.5)/G)*(y1-y0+1)|0);sig+=bg[Y*w+X]?'0':'1'}}
+ return {img:c.toDataURL('image/png'),shadow:sc.toDataURL('image/png'),sig,area:cnt/n};
+}
+const iou=(a,b)=>{if(!a||!b||a.length!==b.length)return 0;let i=0,u=0;for(let k=0;k<a.length;k++){const x=a[k]==='1',y=b[k]==='1';if(x&&y)i++;if(x||y)u++}return u?i/u:0};
+const makeWord=(name,src)=>({id:uid(),word:name,audio:null,inShadow:true,...analyse(fit(src))});
+const cleanName=f=>f.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').replace(/^\d+\s*/,'').trim().toLowerCase();
+const readFile=(f,how)=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r[how](f)});
+const loadImg=url=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
+
+async function addPictos(files){
+ let bad=0;const fresh=[];
+ for(const f of files){try{fresh.push(makeWord(cleanName(f.name),await loadImg(await readFile(f,'readAsDataURL'))))}catch(e){bad++}}
+ if(fresh.length&&central){
+  try{await job(async()=>{await ensureTheme();let n=state.words.reduce((m,w)=>Math.max(m,w.sort||0),0);
+   for(const w of fresh){w.sort=++n;w.pictoPath=state.themeId+'/'+w.id+'.png';await up(w.pictoPath,dataBlob(w.img),'image/png');
+    ok(await sb.from('words').insert({id:w.id,theme_id:state.themeId,word:w.word,picto_path:w.pictoPath,in_shadow:true,sort:w.sort}));state.words.push(w)}})}catch(e){}
+  state.stamp='';save();
+ }else if(fresh.length){if(state.sample){state.words=[];state.theme='';state.sample=false}state.words.push(...fresh);save()}
+ note=bad?t('failed',bad):'';render();
+}
+async function addSounds(files){
+ let hit=0;
+ for(const f of files){const w=state.words.find(w=>w.word.trim().toLowerCase()===cleanName(f.name));if(!w)continue;try{await setAudio(w,await readFile(f,'readAsArrayBuffer'),f.type);hit++}catch(e){}}
+ note=t('matched',hit,files.length);save();render();
+}
+
+/* ---------- central storage ---------- */
+const ok=r=>{if(r.error)throw r.error;return r.data};
+const dataBlob=u=>{const i=u.indexOf(','),bin=atob(u.slice(i+1)),a=new Uint8Array(bin.length);for(let k=0;k<bin.length;k++)a[k]=bin.charCodeAt(k);return new Blob([a],{type:u.slice(5,u.indexOf(';'))})};
+const up=async(path,blob,type)=>ok(await sb.storage.from('media').upload(path,blob,{contentType:type,cacheControl:'31536000',upsert:true}));
+function paintStatus(){const el=$('#sync');if(!el)return;el.textContent=C.busy?t('busy'):C.err||t('savedAll');el.className=C.err&&!C.busy?'flag':''}
+async function job(fn){C.busy++;C.err='';paintStatus();try{return await fn()}catch(e){C.err=t('saveErr');throw e}finally{C.busy--;paintStatus()}}
+const timers={};
+function push(key,fn){if(!central)return;state.stamp='';clearTimeout(timers[key]);timers[key]=setTimeout(()=>{job(async()=>ok(await fn())).catch(()=>{})},600)}
+async function setAudio(w,buf,mime){
+ w.audio=buf;buffers.delete(w.id);
+ if(central){
+  const type=(mime||'audio/webm').split(';')[0],ext=/mp4|m4a|aac/.test(type)?'m4a':/ogg/.test(type)?'ogg':/wav/.test(type)?'wav':/mpeg|mp3/.test(type)?'mp3':'webm';
+  const old=w.audioPath,path=state.themeId+'/'+w.id+'-'+Date.now()+'.'+ext;state.stamp='';
+  try{await job(async()=>{await up(path,new Blob([buf],{type}),type);ok(await sb.from('words').update({audio_path:path}).eq('id',w.id));w.audioPath=path;if(old)sb.storage.from('media').remove([old])})}catch(e){}
+ }
+ save();
+}
+async function ensureTheme(){
+ if(state.themeId)return;const th=ok(await sb.from('themes').insert({name:state.theme||''}).select().single());
+ C.themes.unshift(th);state.themeId=th.id;state.active=false;state.words=[];
+}
+async function checkTeacher(){
+ try{const {data}=await sb.auth.getSession();if(!data.session){C.teacher=false;return false}const r=await sb.rpc('is_teacher');C.teacher=!r.error&&r.data===true}catch(e){C.teacher=false}
+ return C.teacher;
+}
+/* Download a theme. Pictos and recordings this device already has are reused, so a small change is a small download. */
+async function loadTheme(th){
+ const rows=ok(await sb.from('words').select('*').eq('theme_id',th.id).order('sort'));
+ const stamp=JSON.stringify([th.id,th.name,rows.map(r=>[r.id,r.word,r.picto_path,r.audio_path,r.in_shadow,r.sort])]);
+ if(state.stamp===stamp){state.active=th.active;return false}
+ const oldP=new Map(state.words.map(w=>[w.pictoPath,w])),oldA=new Map(state.words.filter(w=>w.audio&&w.audioPath).map(w=>[w.audioPath,w.audio]));
+ let n=0;const tick=()=>{n++;if(view==='home'&&state.words.length<2){loadMsg=t('loading')+' '+n+' / '+rows.length;render()}};
+ const words=await Promise.all(rows.map(async r=>{
+  const p=oldP.get(r.picto_path);
+  const base=p?{img:p.img,shadow:p.shadow,sig:p.sig,area:p.area}:analyse(fit(await loadImg(await readFile(ok(await sb.storage.from('media').download(r.picto_path)),'readAsDataURL'))));
+  const audio=r.audio_path?(oldA.get(r.audio_path)||await ok(await sb.storage.from('media').download(r.audio_path)).arrayBuffer()):null;
+  tick();return {id:r.id,word:r.word,inShadow:r.in_shadow,sort:r.sort,pictoPath:r.picto_path,audioPath:r.audio_path,audio,...base};
+ }));
+ state.words=words;state.theme=th.name;state.themeId=th.id;state.active=th.active;state.stamp=stamp;state.sample=false;loadMsg='';buffers.clear();clearTimeout(saveT);DB.set('cpack',state).catch(()=>{});return true;
+}
+/* What the class sees: the one theme the teacher made ready. Without a connection the saved copy stays in use. */
+let refreshing=false;
+async function refresh(){
+ if(!central||refreshing||C.pinned)return;refreshing=true;
+ try{
+  const th=ok(await sb.from('themes').select('*').eq('active',true).limit(1).maybeSingle());
+  if(!th){if(state.themeId||state.words.length){state.words=[];state.theme='';state.themeId=null;state.active=false;state.stamp='';save()}loadMsg='';if(view==='home')render()}
+  else if(await loadTheme(th)&&view==='home')render();
+ }catch(e){}
+ refreshing=false;if(loadMsg){loadMsg='';if(view==='home')render()}
+}
+async function openTeacher(){
+ hush();note='';
+ if(central){
+  if(!C.teacher){C.loginErr='';view='login';render();return}
+  C.pinned=true;try{C.themes=ok(await sb.from('themes').select('*').order('created_at',{ascending:false}))}catch(e){C.err=t('saveErr')}
+ }
+ view='teacher';render();scrollTo(0,0);
+}
+
+/* ---------- example pack (drawn here, then sent through the same import as real pictos) ---------- */
+function sketch(fn){
+ const c=document.createElement('canvas');c.width=c.height=400;const x=c.getContext('2d');
+ x.fillStyle='#fff';x.fillRect(0,0,400,400);x.lineWidth=12;x.lineJoin=x.lineCap='round';x.strokeStyle='#15171A';
+ fn(x,(fill,path)=>{x.beginPath();path();if(fill){x.fillStyle=fill;x.fill()}x.stroke()});return c;
+}
+const SAMPLE=[
+['appel',(x,S)=>{S('#E0463F',()=>{x.moveTo(200,135);x.bezierCurveTo(150,90,55,115,65,220);x.bezierCurveTo(72,310,150,355,200,328);x.bezierCurveTo(250,355,328,310,335,220);x.bezierCurveTo(345,115,250,90,200,135)});S(null,()=>{x.moveTo(200,135);x.quadraticCurveTo(200,90,222,62)});S('#5FAE4E',()=>{x.moveTo(225,95);x.quadraticCurveTo(250,45,310,60);x.quadraticCurveTo(290,110,225,95)})}],
+['peer',(x,S)=>{S('#C8D24A',()=>{x.moveTo(200,95);x.bezierCurveTo(255,95,245,170,275,215);x.bezierCurveTo(325,290,270,350,200,350);x.bezierCurveTo(130,350,75,290,125,215);x.bezierCurveTo(155,170,145,95,200,95)});S(null,()=>{x.moveTo(200,95);x.quadraticCurveTo(205,65,225,45)})}],
+['blad',(x,S)=>{x.translate(200,200);x.rotate(.45);x.translate(-200,-200);S(null,()=>{x.moveTo(200,290);x.lineTo(200,370)});S('#E98A2B',()=>{x.moveTo(200,40);x.bezierCurveTo(330,120,310,260,200,310);x.bezierCurveTo(90,260,70,120,200,40)});x.lineWidth=7;S(null,()=>{x.moveTo(200,95);x.lineTo(200,300);x.moveTo(200,170);x.lineTo(250,135);x.moveTo(200,170);x.lineTo(150,135);x.moveTo(200,235);x.lineTo(255,200);x.moveTo(200,235);x.lineTo(145,200)})}],
+['boom',(x,S)=>{S('#8B5A33',()=>{x.rect(172,230,56,125)});S('#57A85A',()=>{x.arc(200,155,112,0,7)})}],
+['eikel',(x,S)=>{S('#C98F4E',()=>{x.moveTo(118,180);x.bezierCurveTo(118,300,170,345,200,362);x.bezierCurveTo(230,345,282,300,282,180);x.closePath()});S('#7B4F2B',()=>{x.moveTo(98,190);x.bezierCurveTo(98,85,302,85,302,190);x.closePath()});S(null,()=>{x.moveTo(200,110);x.quadraticCurveTo(200,80,215,58)})}],
+['egel',(x,S)=>{S('#5E3B25',()=>{x.ellipse(120,312,26,14,0,0,7)});S('#5E3B25',()=>{x.ellipse(250,312,26,14,0,0,7)});S('#8A5B3C',()=>{const n=13;for(let i=0;i<=n*2;i++){const a=Math.PI+Math.PI*i/(n*2),r=i%2?1:.8;x.lineTo(185+Math.cos(a)*135*r,300+Math.sin(a)*150*r)}x.closePath()});S('#F2CFA3',()=>{x.moveTo(240,205);x.quadraticCurveTo(320,215,358,282);x.quadraticCurveTo(352,300,330,300);x.lineTo(240,300);x.closePath()});x.fillStyle='#15171A';x.beginPath();x.arc(352,284,11,0,7);x.fill();x.beginPath();x.arc(295,255,8,0,7);x.fill()}],
+['laars',(x,S)=>{S('#3A3D42',()=>{x.rect(128,322,222,30)});S('#F2C230',()=>{x.moveTo(140,55);x.lineTo(240,55);x.lineTo(240,225);x.quadraticCurveTo(335,235,338,322);x.lineTo(140,322);x.closePath()});x.lineWidth=8;S(null,()=>{x.moveTo(140,95);x.lineTo(240,95)})}],
+['muts',(x,S)=>{S('#D8485E',()=>{x.moveTo(88,270);x.bezierCurveTo(88,70,312,70,312,270);x.closePath()});S('#FFFFFF',()=>{x.roundRect?x.roundRect(66,250,268,78,24):x.rect(66,250,268,78)});S('#FFFFFF',()=>{x.arc(200,92,40,0,7)});x.lineWidth=7;S(null,()=>{[130,200,270].forEach(a=>{x.moveTo(a,266);x.lineTo(a,312)})})}],
+['paddenstoel',(x,S)=>{S('#FFFFFF',()=>{x.moveTo(158,195);x.lineTo(146,335);x.quadraticCurveTo(200,362,254,335);x.lineTo(242,195);x.closePath()});S('#D93B3B',()=>{x.moveTo(55,205);x.bezierCurveTo(55,35,345,35,345,205);x.closePath()});x.fillStyle='#fff';[[140,130,22],[215,95,18],[270,150,24],[200,165,14]].forEach(([a,b,r])=>{x.beginPath();x.arc(a,b,r,0,7);x.fill()})}],
+['paraplu',(x,S)=>{x.lineWidth=16;S(null,()=>{x.moveTo(200,190);x.lineTo(200,318);x.arc(228,318,28,Math.PI,0,true)});x.lineWidth=12;S(null,()=>{x.moveTo(200,72);x.lineTo(200,48)});S('#3B82C4',()=>{x.moveTo(45,215);x.bezierCurveTo(45,25,355,25,355,215);x.quadraticCurveTo(303,170,252,215);x.quadraticCurveTo(200,170,148,215);x.quadraticCurveTo(97,170,45,215)})}],
+['pompoen',(x,S)=>{S('#4F9A4A',()=>{x.moveTo(178,135);x.lineTo(188,82);x.lineTo(228,88);x.lineTo(222,135);x.closePath()});S('#F08A24',()=>{x.ellipse(200,235,145,105,0,0,7)});x.lineWidth=7;S(null,()=>{x.ellipse(200,235,75,105,0,0,7)});S(null,()=>{x.moveTo(200,130);x.lineTo(200,340)})}],
+['wolk',(x,S)=>{S('#FFFFFF',()=>{x.moveTo(105,235);x.bezierCurveTo(30,235,35,145,112,148);x.bezierCurveTo(120,70,235,62,255,130);x.bezierCurveTo(330,105,385,195,310,235);x.closePath()});x.strokeStyle='#3B82C4';x.lineWidth=16;S(null,()=>{[[135,272],[205,272],[275,272]].forEach(([a,b])=>{x.moveTo(a,b);x.lineTo(a-16,b+52)})})}]
+];
+function loadSample(){state.words=SAMPLE.map(([n,fn])=>makeWord(n,sketch(fn)));state.theme='Herfst';state.sample=true;buffers.clear()}
+
+/* ---------- sound ---------- */
+let actx;const buffers=new Map();let playing=null;
+function ac(){if(!actx){const A=window.AudioContext||window.webkitAudioContext;if(A){try{actx=new A()}catch(e){}}}if(actx&&actx.state==='suspended')actx.resume().catch(()=>{});return actx}
+async function decode(w){
+ if(buffers.has(w.id))return buffers.get(w.id);const a=ac();if(!a||!w.audio)return null;
+ const buf=await new Promise((res,rej)=>{const p=a.decodeAudioData(w.audio.slice(0),res,rej);if(p&&p.catch)p.catch(rej)});
+ // skip the silence before and after the spoken word
+ const d=buf.getChannelData(0);let s=0,e=d.length-1;while(s<e&&Math.abs(d[s])<.02)s++;while(e>s&&Math.abs(d[e])<.02)e--;
+ let o={buf,from:0,dur:buf.duration};
+ if(e-s>buf.sampleRate*.08){const pad=buf.sampleRate*.08;o={buf,from:Math.max(0,s-pad)/buf.sampleRate,dur:0};o.dur=Math.min(buf.duration,(e+pad*3)/buf.sampleRate)-o.from}
+ buffers.set(w.id,o);return o;
+}
+function hush(){try{if(playing){playing.onended=null;playing.stop()}}catch(e){}playing=null;try{if(hasTTS)speechSynthesis.cancel()}catch(e){}}
+async function say(w){
+ if(!w)return;hush();
+ try{if(w.audio){const o=await decode(w);if(o){const a=ac(),src=a.createBufferSource();src.buffer=o.buf;src.connect(a.destination);src.start(0,o.from,o.dur);playing=src;return new Promise(r=>{src.onended=r;setTimeout(r,o.dur*1000+400)})}}}catch(e){}
+ return speak(w.word);
+}
+function speak(text){return new Promise(r=>{try{if(!hasTTS||!text)return r();const u=new SpeechSynthesisUtterance(text),v=speechSynthesis.getVoices().find(v=>/^nl/i.test(v.lang));u.lang=v?v.lang:'nl-BE';if(v)u.voice=v;u.rate=.85;u.onend=u.onerror=()=>r();speechSynthesis.speak(u);setTimeout(r,2500)}catch(e){r()}})}
+function ding(){
+ if(!state.ding)return;const a=ac();if(!a)return;const t0=a.currentTime;
+ [659.25,880].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain(),s=t0+i*.12;o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,s);g.gain.linearRampToValueAtTime(.11,s+.02);g.gain.exponentialRampToValueAtTime(.001,s+.45);o.connect(g);g.connect(a.destination);o.start(s);o.stop(s+.5)});
+}
+async function cheer(w){ding();await wait(state.ding?420:0);await Promise.race([say(w),wait(4500)])}
+
+async function toggleRec(id){
+ if(rec){if(rec.id===id&&rec.mr.state==='recording')rec.mr.stop();return}
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){micBlocked=true;render();return}
+ let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){micBlocked=true;render();return}
+ const mr=new MediaRecorder(stream),chunks=[];const me=rec={id,mr,t:0};
+ mr.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+ mr.onstop=async()=>{clearTimeout(me.t);stream.getTracks().forEach(x=>x.stop());rec=null;const w=word(id),blob=new Blob(chunks,{type:mr.mimeType||'audio/webm'});
+  if(w&&blob.size)setAudio(w,await blob.arrayBuffer(),blob.type);
+  if(view==='teacher')render();if(w)say(w)};
+ mr.start();me.t=setTimeout(()=>{if(mr.state==='recording')mr.stop()},5000);render();
+}
+
+/* ---------- views ---------- */
+const pc=(w,opt={})=>`<${opt.tag||'span'} class="pc ${opt.cls||''}" ${opt.attr||''}><img src="${opt.shadow?w.shadow:w.img}" alt="${opt.alt!==undefined?opt.alt:esc(w.word)}">${opt.word&&state.showWords?`<span class="w">${esc(w.word)}</span>`:''}</${opt.tag||'span'}>`;
+const teacherBtn=()=>`<button class="ib" data-act="teacher">${ico('gear')}<span class="t">${t('teacher')}</span></button>`;
+
+function homeView(){
+ const ws=state.words,title=esc(state.theme||'Picto Woordspel');
+ const head=`<div class="bar"><h1>${title}</h1>${state.sample?`<span class="tag">${t('example')}</span>`:central&&state.themeId&&!state.active?`<span class="tag">${t('notActive')}</span>`:''}<span class="sub">${t('count',ws.length)}</span><span class="sp"></span>${teacherBtn()}</div>`;
+ if(ws.length<2){
+  const e=loadMsg?[loadMsg,'']:central&&!state.themeId?[t('noTheme'),t('noThemeHint')]:[t('empty'),t('emptyHint')];
+  return head+`<div class="empty"><h2>${e[0]}</h2>${e[1]?`<p class="hint">${e[1]}</p>`:''}${loadMsg?'':`<button class="btn pri" data-act="teacher">${ico('gear')}${t('teacher')}</button>`}</div>`;
+ }
+ const a=ws[0],b=ws[1],c=ws[2]||ws[0];
+ const tile=(g,tc,prev,name,sub)=>`<button class="tile" style="--tc:var(--${tc})" data-act="start" data-g="${g}"><span class="prev">${prev}</span><span class="tn">${name}</span>${sub?`<span class="ts">${sub}</span>`:''}</button>`;
+ const m=(w,o={})=>pc(w,{cls:'mini',alt:'',...o});
+ return head+`<div class="tiles">
+  ${tile('shadow','t1',m(a)+m(a,{shadow:true}),t('gShadow'))}
+  ${tile('open','t2',m(b)+m(b),t('gSame'),t('subOpen'))}
+  ${tile('closed','t3',`<span class="pc mini bk"></span>`+m(c),t('gSame'),t('subClosed'))}
+  ${tile('listen','t4',`<span class="pc mini spk">${ico('speaker')}</span>`+m(c),t('gListen'))}
+ </div>
+ <h2>${t('ourWords')}</h2><p class="hint">${t('tapHear')}</p>
+ <div class="strip">${ws.map(w=>`<button class="pc" data-act="say" data-id="${w.id}"><img src="${w.img}" alt=""><span class="w">${esc(w.word)}</span></button>`).join('')}</div>`;
+}
+
+function dots(total,on){let s='';for(let i=0;i<total;i++)s+=`<svg class="i f ${i<on?'on':''}" aria-hidden="true"><use href="#i-star"/></svg>`;return `<div class="dots" id="dots">${s}</div>`}
+function gameView(){
+ const g=game,bar=n=>`<div class="bar"><button class="ib round" data-act="home" aria-label="${t('back')}">${ico('back')}</button>${n}<span class="sp"></span></div>`;
+ if(g.type==='open'||g.type==='closed'){
+  return bar(dots(g.pairs,g.found))+`<div class="stage"><p class="ask">${t('askSame')}</p><div class="mem">${g.cards.map((c,i)=>`<button class="pc mc ${g.type==='closed'?'down':''}" data-act="flip" data-i="${i}" aria-label="${t('card')} ${i+1}"><img src="${c.w.img}" alt=""><span class="face"></span></button>`).join('')}</div></div>`;
+ }
+ const tg=g.targets[g.i],n=g.choices.length;
+ if(g.type==='shadow')return bar(dots(g.targets.length,g.done))+`<div class="stage"><p class="ask">${t('askShadow')}</p>${pc(tg,{cls:'target',word:true})}<div class="choices" style="--n:${n}" data-n="${n}">${g.choices.map((w,i)=>pc(w,{tag:'button',shadow:true,alt:'',cls:'choice',attr:`data-act="ans" data-id="${w.id}" aria-label="${t('shadowN')} ${i+1}"`})).join('')}</div></div>`;
+ return bar(dots(g.targets.length,g.done))+`<div class="stage"><p class="ask">${t('askListen')}</p><button class="speak" data-act="replay" aria-label="${t('replay')}">${ico('speaker')}</button><div class="choices" style="--n:${n}" data-n="${n}">${g.choices.map(w=>pc(w,{tag:'button',cls:'choice',attr:`data-act="ans" data-id="${w.id}"`})).join('')}</div></div>`;
+}
+function doneView(){
+ const n=game.targets?game.targets.length:game.pairs;let s='';for(let i=0;i<n;i++)s+=ico('star','f');
+ return `<div class="donebox"><div class="bigstars">${s}</div><h1>${t('done')}</h1><div class="rowbtn"><button class="btn pri big" data-act="start" data-g="${game.type}">${ico('again')}${t('again')}</button><button class="btn big" data-act="home">${ico('home')}${t('other')}</button></div></div>`;
+}
+
+function loginView(){
+ return `<div class="bar"><button class="ib round" data-act="home" aria-label="${t('back')}">${ico('back')}</button><h1>${t('loginTitle')}</h1><span class="sp"></span></div>
+ <form class="panel" id="login" style="max-width:460px">
+  <div class="field"><label for="lg-mail">${t('email')}</label><input type="email" id="lg-mail" autocomplete="username" required></div>
+  <div class="field"><label for="lg-pw">${t('pw')}</label><input type="password" id="lg-pw" autocomplete="current-password" required></div>
+  ${C.loginErr?`<p class="note">${esc(C.loginErr)}</p>`:''}
+  <div><button class="btn pri" type="submit" id="lg-go">${t('signIn')}</button></div>
+ </form>`;
+}
+function teacherView(){
+ const ws=state.words,recN=ws.filter(w=>w.audio).length;
+ const flags=w=>{const f=[];if(w.area<.03)f.push(t('flagEmpty'));else if(w.area>.9)f.push(t('flagBg'));const tw=ws.find(o=>o!==w&&iou(o.sig,w.sig)>LIKE);if(tw)f.push(t('flagLike',tw.word));return f.map(x=>`<span class="flag">${esc(x)}</span>`).join('')};
+ const row=w=>{const on=rec&&rec.id===w.id;return `<li class="row">
+  <div class="thumbs">${pc(w,{cls:'th'})}${pc(w,{cls:'th',shadow:true,alt:t('shadowN')})}</div>
+  <div class="mid"><label class="vh" for="w-${w.id}">${t('word')}</label><input type="text" id="w-${w.id}" data-in="word" data-id="${w.id}" value="${esc(w.word)}" autocomplete="off" autocapitalize="off">
+   <div class="st">${w.audio?`<span class="own">${t('own')}</span>`:`<span>${hasTTS?t('tts'):t('none')}</span>`}${flags(w)}</div>
+   <label class="chk"><input type="checkbox" id="s-${w.id}" data-in="inShadow" data-id="${w.id}" ${w.inShadow!==false?'checked':''}>${t('inShadow')}</label></div>
+  <div class="acts">
+   ${micBlocked?'':`<button class="btn ${on?'on':'pri'}" data-act="rec" data-id="${w.id}">${ico(on?'stop':'mic')}${on?t('stop'):t('rec')}</button>`}
+   <label class="btn ${micBlocked?'pri':'sq'}" title="${t('file')}">${ico('up')}${micBlocked?t('file'):`<span class="vh">${t('file')}</span>`}<input class="vh" type="file" id="a-${w.id}" accept="audio/*" data-file="audio" data-id="${w.id}"></label>
+   <button class="btn sq" data-act="say" data-id="${w.id}" aria-label="${t('play')}" title="${t('play')}">${ico('play')}</button>
+   <button class="btn sq quiet" data-act="delWord" data-id="${w.id}" aria-label="${t('delWord')}" title="${t('delWord')}">${ico('x')}</button>
+  </div></li>`};
+ const sure=Date.now()-sureAt<4000;
+ const cen=central?`<div class="set" style="align-items:flex-end"><div class="field" style="flex:1 1 220px"><label for="themeSel">${t('themeSel')}</label><select id="themeSel" data-in="themeSel">${state.themeId&&C.themes.some(x=>x.id===state.themeId)?'':`<option value="">${C.themes.length?'…':t('noTheme')}</option>`}${C.themes.map(x=>`<option value="${x.id}" ${x.id===state.themeId?'selected':''}>${esc(x.name||t('unnamed'))}${x.active?' ★':''}</option>`).join('')}</select></div>
+  <button class="btn" data-act="newTheme">${ico('plus')}${t('newTheme')}</button>
+  ${state.themeId?(state.active?`<span class="tag">${t('isActive')}</span>`:`<button class="btn pri" data-act="activate">${ico('star','f')}${t('makeActive')}</button>`):''}</div>`:'';
+ const seg=(key,vals,lab)=>`<span class="seg" role="group">${vals.map(v=>`<button data-act="set" data-k="${key}" data-v="${v}" aria-pressed="${String(state[key])===String(v)}">${lab?lab(v):v}</button>`).join('')}</span>`;
+ return `<div class="bar"><button class="ib round" data-act="home" aria-label="${t('back')}">${ico('back')}</button><h1>${t('tTitle')}</h1><span class="sp"></span></div>
+ <div class="panel">
+  ${cen}
+  <div class="field"><label for="theme">${t('theme')}</label><input type="text" id="theme" data-in="theme" value="${esc(state.theme)}" placeholder="${t('themePh')}" autocomplete="off"></div>
+  <div class="rowbtn" style="justify-content:flex-start">
+   <label class="btn pri">${ico('plus')}${t('add')}<input class="vh" type="file" id="addp" accept="image/*" multiple data-file="pictos"></label>
+   <label class="btn">${ico('up')}${t('addAudio')}<input class="vh" type="file" id="adda" accept="audio/*" multiple data-file="sounds"></label>
+  </div>
+  <p class="hint">${t('addHint')}</p>
+  ${state.sample?`<p class="note">${t('exampleNote')}</p>`:''}${micBlocked?`<p class="note">${t('micBlocked')}</p>`:''}${note?`<p class="note">${esc(note)}</p>`:''}
+ </div>
+ <div class="panel">
+  <div class="st"><span class="lab">${t('count',ws.length)}</span><span>${t('recN',recN,ws.length)}</span>${central?'<span id="sync"></span>':''}</div>
+  <ul class="rows">${ws.map(row).join('')}</ul>
+ </div>
+ <div class="panel"><h2>${t('settings')}</h2>
+  <div class="set"><span class="lab">${t('choices')}</span>${seg('choices',[2,3,4])}</div>
+  <label class="chk"><input type="checkbox" id="set-words" data-in="showWords" ${state.showWords?'checked':''}>${t('showWords')}</label>
+  <label class="chk"><input type="checkbox" id="set-ding" data-in="ding" ${state.ding?'checked':''}>${t('ding')}</label>
+  <div class="set"><span class="lab">${t('lang')}</span>${seg('lang',['nl','en'],v=>v==='nl'?'Nederlands':'English')}</div>
+  <p class="hint">${central?t('savedCentral'):t('saved')}</p>
+  <div class="rowbtn" style="justify-content:flex-start">${central
+   ?`<button class="btn" data-act="signOut">${t('signOut')}</button>${state.themeId?`<button class="btn ${sure?'on':'quiet'}" data-act="delTheme">${sure?t('sure'):t('delTheme')}</button>`:''}`
+   :`<button class="btn" data-act="sample">${t('loadSample')}</button><button class="btn ${sure?'on':'quiet'}" data-act="clear">${sure?t('sure'):t('clear')}</button>`}</div>
+ </div>`;
+}
+
+function layoutMem(){
+ const el=$('.mem');if(!el||!game||!game.cards)return;const n=game.cards.length,land=innerWidth>=innerHeight;
+ const cols=n<=4?2:n<=6?(land?3:2):n<=8?(land?4:2):(land?4:3);
+ el.style.setProperty('--cols',cols);el.style.setProperty('--rows',Math.ceil(n/cols));
+}
+function render(){
+ const app=$('#app');document.documentElement.lang=state.lang;
+ app.innerHTML=view==='home'?homeView():view==='game'?gameView():view==='done'?doneView():view==='login'?loginView():teacherView();
+ layoutMem();paintStatus();
+}
+
+/* ---------- games ---------- */
+function start(type){
+ ac();hush();const ws=state.words;if(ws.length<2)return;
+ if(type==='open'||type==='closed'){
+  const pick=shuffle(ws).slice(0,Math.min({2:3,3:4,4:6}[state.choices]||4,ws.length));
+  game={type,cards:shuffle(pick.flatMap(w=>[{w},{w}])),open:[],found:0,pairs:pick.length,lock:false};
+ }else{
+  let pool=type==='shadow'?ws.filter(w=>w.inShadow!==false&&w.area>=.03&&w.area<=.9):ws;if(pool.length<2)pool=ws;
+  game={type,pool,targets:shuffle(pool).slice(0,Math.min(6,pool.length)),i:0,done:0};newRound();
+ }
+ view='game';render();if(type==='listen')say(game.targets[0]);
+}
+function newRound(){
+ const g=game,tg=g.targets[g.i],n=Math.min(state.choices,g.pool.length);let others=g.pool.filter(w=>w.id!==tg.id);
+ if(g.type==='shadow'){const far=others.filter(w=>iou(w.sig,tg.sig)<=LIKE);if(far.length>=n-1)others=far}
+ g.choices=shuffle([tg,...shuffle(others).slice(0,n-1)]);g.solved=false;
+}
+function star(n){const d=document.querySelectorAll('#dots svg');for(let i=0;i<n&&i<d.length;i++)d[i].classList.add('on')}
+async function answer(el,id){
+ const g=game;if(!g||g.solved)return;const tg=g.targets[g.i];
+ if(id!==tg.id){el.classList.add('no','wob');return}
+ g.solved=true;g.done++;el.classList.add('ok');star(g.done);
+ if(g.type==='shadow')el.querySelector('img').src=tg.img;
+ if(state.showWords&&!el.querySelector('.w'))el.insertAdjacentHTML('beforeend',`<span class="w">${esc(tg.word)}</span>`);
+ await cheer(tg);await wait(700);if(game!==g||view!=='game')return;
+ g.i++;if(g.i>=g.targets.length){view='done';render();return}
+ newRound();render();if(g.type==='listen'){await wait(250);if(game===g)say(g.targets[g.i])}
+}
+function flip(el,i){
+ const g=game;if(!g||g.lock)return;const c=g.cards[i],closed=g.type==='closed';if(c.found)return;
+ const at=g.open.indexOf(i);
+ if(at>=0){if(!closed){g.open.splice(at,1);el.classList.remove('sel')}return}
+ el.classList.remove('wob');el.classList.add('sel');if(closed)el.classList.remove('down');
+ g.open.push(i);if(g.open.length<2)return;
+ const [a,b]=g.open,els=[a,b].map(k=>$(`.mc[data-i="${k}"]`));
+ if(g.cards[a].w.id===g.cards[b].w.id){
+  g.cards[a].found=g.cards[b].found=true;g.open=[];g.found++;els.forEach(e=>{e.classList.remove('sel');e.classList.add('found')});star(g.found);
+  const done=g.found===g.pairs;cheer(c.w).then(async()=>{if(!done)return;await wait(700);if(game===g&&view==='game'){view='done';render()}});
+ }else{
+  g.lock=true;setTimeout(()=>{if(game!==g)return;els.forEach(e=>{if(!e)return;e.classList.remove('sel');e.classList.add('wob');if(closed)e.classList.add('down')});g.open=[];g.lock=false},closed?1400:600);
+ }
+}
+
+/* ---------- events ---------- */
+const app=$('#app');
+app.addEventListener('click',e=>{
+ const el=e.target.closest('[data-act]');if(!el)return;const act=el.dataset.act,id=el.dataset.id;
+ if(act==='home'){hush();game=null;view='home';render()}
+ else if(act==='teacher')openTeacher();
+ else if(act==='start')start(el.dataset.g);
+ else if(act==='say'){ac();say(word(id))}
+ else if(act==='replay'){ac();say(game.targets[game.i])}
+ else if(act==='ans')answer(el,id);
+ else if(act==='flip')flip(el,+el.dataset.i);
+ else if(act==='rec'){ac();toggleRec(id)}
+ else if(act==='delAudio'){const w=word(id);if(w){w.audio=null;buffers.delete(id);save();render()}}
+ else if(act==='delWord'){
+  const w=word(id);if(central&&w){state.stamp='';job(async()=>{ok(await sb.from('words').delete().eq('id',id));sb.storage.from('media').remove([w.pictoPath,w.audioPath].filter(Boolean))}).catch(()=>{})}
+  state.words=state.words.filter(w=>w.id!==id);buffers.delete(id);save();render();
+ }
+ else if(act==='newTheme')job(async()=>{const th=ok(await sb.from('themes').insert({name:''}).select().single());C.themes.unshift(th);state.themeId=th.id;state.theme='';state.active=false;state.words=[];state.stamp='';buffers.clear();save()}).then(()=>{render();const i=$('#theme');if(i)i.focus()},render);
+ else if(act==='activate')job(async()=>{ok(await sb.from('themes').update({active:false}).eq('active',true));ok(await sb.from('themes').update({active:true}).eq('id',state.themeId));C.themes.forEach(x=>{x.active=x.id===state.themeId});state.active=true;state.stamp='';save()}).then(render,render);
+ else if(act==='delTheme'){
+  if(Date.now()-sureAt<4000){sureAt=0;const tid=state.themeId,paths=state.words.flatMap(w=>[w.pictoPath,w.audioPath]).filter(Boolean);
+   job(async()=>{ok(await sb.from('themes').delete().eq('id',tid));if(paths.length)sb.storage.from('media').remove(paths);C.themes=C.themes.filter(x=>x.id!==tid);state.themeId=null;state.theme='';state.active=false;state.words=[];state.stamp='';buffers.clear();save()}).then(render,render);
+  }else{sureAt=Date.now();render()}
+ }
+ else if(act==='signOut')sb.auth.signOut().catch(()=>{}).then(()=>{C.teacher=false;C.pinned=false;view='home';render();refresh()});
+ else if(act==='set'){const k=el.dataset.k;state[k]=k==='choices'?+el.dataset.v:el.dataset.v;save();render()}
+ else if(act==='sample'){loadSample();note='';save();render()}
+ else if(act==='clear'){if(Date.now()-sureAt<4000){sureAt=0;state.words=[];state.theme='';state.sample=false;buffers.clear();save()}else sureAt=Date.now();render()}
+});
+app.addEventListener('input',e=>{
+ const el=e.target,k=el.dataset.in;if(!k)return;
+ if(k==='word'){const w=word(el.dataset.id);if(w){w.word=el.value;save();push('w'+w.id,()=>sb.from('words').update({word:w.word}).eq('id',w.id))}}
+ else if(k==='theme'){state.theme=el.value;save();const x=C.themes.find(x=>x.id===state.themeId);if(x){x.name=el.value;const tid=x.id;push('theme',()=>sb.from('themes').update({name:x.name}).eq('id',tid))}}
+});
+app.addEventListener('change',e=>{
+ const el=e.target,k=el.dataset.in,f=el.dataset.file;
+ if(k==='inShadow'){const w=word(el.dataset.id);if(w){w.inShadow=el.checked;save();push('s'+w.id,()=>sb.from('words').update({in_shadow:w.inShadow}).eq('id',w.id))}}
+ else if(k==='themeSel'){const th=C.themes.find(x=>x.id===el.value);if(th)job(()=>loadTheme(th)).then(render,render)}
+ else if(k==='showWords'||k==='ding'){state[k]=el.checked;save()}
+ else if(f&&el.files&&el.files.length){const files=[...el.files];
+  if(f==='pictos')addPictos(files);else if(f==='sounds')addSounds(files);
+  else readFile(files[0],'readAsArrayBuffer').then(buf=>{const w=word(el.dataset.id);if(!w)return;setAudio(w,buf,files[0].type);render();say(w)}).catch(()=>{})}
+});
+addEventListener('resize',layoutMem);
+app.addEventListener('submit',async e=>{
+ e.preventDefault();if(e.target.id!=='login'||!central)return;
+ const mail=$('#lg-mail').value.trim(),pw=$('#lg-pw').value;$('#lg-go').disabled=true;
+ try{ok(await sb.auth.signInWithPassword({email:mail,password:pw}));if(!(await checkTeacher())){await sb.auth.signOut();C.loginErr=t('notTeacher');render();return}openTeacher()}
+ catch(err){C.loginErr=t('loginErr');render()}
+});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&view==='home')refresh()});
+
+/* ---------- start ---------- */
+(async()=>{
+ let saved=null;try{saved=await DB.get(central?'cpack':'pack')}catch(e){}
+ if(saved&&Array.isArray(saved.words))state={...state,...saved};else if(!central)loadSample();
+ if(central&&state.words.length<2)loadMsg=t('loading');
+ render();
+ if(central){await checkTeacher();await refresh()}
+})();
+})();
+</script>
