@@ -1,5 +1,5 @@
 // Browser-only wrappers around analyse.ts: draw, read pixels, encode.
-import { analysePixels, fitRect, shadowPixels, SIZE, type Analysis } from './analyse';
+import { analysePixels, estimatePaper, fitRect, shadowPixels, SIZE, whitenPaper, type Analysis } from './analyse';
 
 function canvas(): HTMLCanvasElement {
   const c = document.createElement('canvas');
@@ -27,6 +27,22 @@ export function fitOnWhite(src: CanvasImageSource & { width: number; height: num
   const r = fitRect(iw, ih);
   x.imageSmoothingQuality = 'high';
   x.drawImage(src, r.x, r.y, r.w, r.h);
+  return c;
+}
+
+/**
+ * The picto as it is stored (HANDOVER.md section 7): fitted on white, and for a photo or scan of paper, colour
+ * corrected so the paper is white.
+ */
+export function standardise(src: CanvasImageSource & { width: number; height: number }): HTMLCanvasElement {
+  const c = fitOnWhite(src);
+  const x = c.getContext('2d', { willReadFrequently: true })!;
+  const data = x.getImageData(0, 0, SIZE, SIZE);
+  const paper = estimatePaper(data.data, SIZE, SIZE);
+  if (paper) {
+    whitenPaper(data.data, paper);
+    x.putImageData(data, 0, 0);
+  }
   return c;
 }
 

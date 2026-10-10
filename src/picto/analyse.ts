@@ -8,6 +8,8 @@ export const SIG_GRID = 24;
 export const SIMILAR = 0.9;
 export const AREA_MIN = 0.03;
 export const AREA_MAX = 0.9;
+/** How far (RGB distance) a pixel may be from the estimated paper colour and still count as background. */
+export const PAPER_TOLERANCE = 32;
 
 export interface Analysis {
   /** 1 = object (part of the shadow), 0 = background reachable from the border. */
@@ -25,17 +27,105 @@ function isNearWhite(p: ArrayLike<number>, i: number): boolean {
   return p[o + 3]! < 24 || (p[o]! >= 226 && p[o + 1]! >= 226 && p[o + 2]! >= 226);
 }
 
+function isPureWhite(p: ArrayLike<number>, i: number): boolean {
+  const o = i << 2;
+  return p[o + 3]! < 24 || (p[o]! >= 250 && p[o + 1]! >= 250 && p[o + 2]! >= 250);
+}
+
+function median(v: number[]): number {
+  const s = v.slice().sort((a, b) => a - b);
+  return s[s.length >> 1]!;
+}
+
 /**
- * Flood fill from every border pixel over near-white pixels. Whatever is not reached is the object, so white
- * areas enclosed by an outline stay part of the shadow.
+ * Colour of the paper around a photographed or scanned picto, or null for a clean digital picto.
+ *
+ * Walks in from each side past the white fitting margin. A photo ends in a straight edge, so along a side the
+ * first non-white pixel sits at the same depth on (nearly) every line; an object's outline does not. Only sides
+ * with such a straight edge are sampled, just inside it. When most samples agree on one colour that is not
+ * near-white, that colour is the paper.
+ */
+export function estimatePaper(p: ArrayLike<number>, w: number, h: number): [number, number, number] | null {
+  const STEP = 4, DEPTH = 4;
+  const samples: [number, number, number][] = [];
+  let straightSides = 0;
+  /** One side: `starts` are the edge pixels of each line, `inward` the step towards the middle. */
+  const side = (starts: number[], inward: number, len: number) => {
+    const hits: { depth: number; i: number }[] = [];
+    for (const start of starts) {
+      let i = start, depth = 0;
+      while (depth < len / 2 && isPureWhite(p, i)) {
+        i += inward;
+        depth++;
+      }
+      if (!isPureWhite(p, i)) hits.push({ depth, i });
+    }
+    if (hits.length < starts.length * 0.8) return;
+    const edge = median(hits.map((h) => h.depth));
+    const onEdge = hits.filter((h) => Math.abs(h.depth - edge) <= 1);
+    if (onEdge.length < starts.length * 0.8) return;
+    straightSides++;
+    for (const h of onEdge) {
+      const o = (h.i + inward * DEPTH) << 2;
+      samples.push([p[o]!, p[o + 1]!, p[o + 2]!]);
+    }
+  };
+  const xs = Array.from({ length: Math.ceil(w / STEP) }, (_, k) => k * STEP);
+  const ys = Array.from({ length: Math.ceil(h / STEP) }, (_, k) => k * STEP);
+  side(xs, w, h);
+  side(xs.map((x) => (h - 1) * w + x), -w, h);
+  side(ys.map((y) => y * w), 1, w);
+  side(ys.map((y) => y * w + w - 1), -1, w);
+  if (straightSides < 2) return null;
+
+  const paper = [0, 1, 2].map((c) => median(samples.map((s) => s[c]!))) as [number, number, number];
+  // Truly white already: nothing to correct. Lighter-than-near-white paper still counts, because its light is often uneven.
+  if (paper.every((c) => c >= 250)) return null;
+  const close = samples.filter((s) => distance(s, paper) < PAPER_TOLERANCE).length;
+  return close >= samples.length * 0.6 ? paper : null;
+}
+
+/**
+ * Scale each colour channel so the paper becomes white, in place. Used when storing an uploaded photo or scan:
+ * the picto looks like a clean card, and slightly darker paper (uneven light) still falls under the near-white
+ * rule afterwards.
+ */
+export function whitenPaper(p: Uint8ClampedArray, paper: readonly [number, number, number]): void {
+  const gain = paper.map((c) => 255 / Math.max(c, 1));
+  for (let o = 0; o < p.length; o += 4) {
+    p[o] = p[o]! * gain[0]!;
+    p[o + 1] = p[o + 1]! * gain[1]!;
+    p[o + 2] = p[o + 2]! * gain[2]!;
+  }
+}
+
+function distance(a: ArrayLike<number>, b: ArrayLike<number>): number {
+  return Math.hypot(a[0]! - b[0]!, a[1]! - b[1]!, a[2]! - b[2]!);
+}
+
+/**
+ * Flood fill from every border pixel over background pixels: near-white, or close to the paper colour when the
+ * picto is a photo or scan of paper. Whatever is not reached is the object, so white areas enclosed by an outline
+ * stay part of the shadow.
  */
 export function analysePixels(p: ArrayLike<number>, w: number, h: number): Analysis {
   const n = w * h;
   const bg = new Uint8Array(n);
   const stack = new Int32Array(n);
+  const paper = estimatePaper(p, w, h);
+  const px: number[] = [0, 0, 0];
+  const isBackground = (i: number) => {
+    if (isNearWhite(p, i)) return true;
+    if (!paper) return false;
+    const o = i << 2;
+    px[0] = p[o]!;
+    px[1] = p[o + 1]!;
+    px[2] = p[o + 2]!;
+    return distance(px, paper) < PAPER_TOLERANCE;
+  };
   let sp = 0;
   const push = (i: number) => {
-    if (!bg[i] && isNearWhite(p, i)) {
+    if (!bg[i] && isBackground(i)) {
       bg[i] = 1;
       stack[sp++] = i;
     }

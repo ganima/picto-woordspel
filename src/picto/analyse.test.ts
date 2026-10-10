@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analysePixels, fitRect, iou, isSimilar, shadowFlag, shadowPixels, SIG_GRID, SIZE, wordFromFileName } from './analyse';
+import { analysePixels, estimatePaper, fitRect, iou, isSimilar, shadowFlag, shadowPixels, SIG_GRID, SIZE, whitenPaper, wordFromFileName } from './analyse';
 
 /** w×h white RGBA image; paint(x, y) returns an [r,g,b,a] to draw there, or null to leave white. */
 function image(w: number, h: number, paint: (x: number, y: number) => number[] | null) {
@@ -37,6 +37,46 @@ describe('analysePixels', () => {
   it('counts a non-white frame as covering everything', () => {
     const p = image(20, 20, (x, y) => (x === 0 || y === 0 || x === 19 || y === 19 ? BLACK : null));
     expect(analysePixels(p, 20, 20).area).toBe(1);
+  });
+});
+
+describe('photographed paper', () => {
+  const PAPER = [215, 203, 200, 255];
+  // A 40×40 photo of grey-pink paper with a dark 10×10 square, placed on white with a 4 px margin, as fitOnWhite does.
+  const photo = (object: number[]) =>
+    image(48, 48, (x, y) => {
+      if (x < 4 || y < 4 || x >= 44 || y >= 44) return null;
+      return x >= 19 && x < 29 && y >= 19 && y < 29 ? object : PAPER;
+    });
+
+  it('finds the paper colour behind the white margin', () => {
+    expect(estimatePaper(photo(BLACK), 48, 48)).toEqual([215, 203, 200]);
+  });
+
+  it('treats the paper as background, so only the object becomes the shadow', () => {
+    expect(analysePixels(photo(BLACK), 48, 48).area).toBeCloseTo(100 / (48 * 48));
+  });
+
+  it('keeps a pale object that differs clearly from the paper', () => {
+    expect(analysePixels(photo([250, 225, 160, 255]), 48, 48).area).toBeCloseTo(100 / (48 * 48));
+  });
+
+  it('whitens the paper and keeps the white margin white', () => {
+    const p = photo(BLACK);
+    whitenPaper(p, [215, 203, 200]);
+    expect([...p.slice(0, 4)]).toEqual([255, 255, 255, 255]); // margin
+    const o = (10 * 48 + 10) * 4; // paper
+    expect([...p.slice(o, o + 3)]).toEqual([255, 255, 255]);
+  });
+
+  it('leaves clean white pictos and objects touching the edge to the near-white rule', () => {
+    expect(estimatePaper(image(20, 20, () => null), 20, 20)).toBeNull();
+    const colours = [BLACK, [200, 30, 30, 255], [40, 160, 60, 255], [240, 200, 40, 255], [60, 90, 200, 255]];
+    const busy = image(20, 20, (x, y) => colours[(x * 7 + y * 13) % 5]!);
+    expect(estimatePaper(busy, 20, 20)).toBeNull();
+    // A clean picto: white background, dark outline of a round object. Its outline is not a straight edge.
+    const disc = image(48, 48, (x, y) => (Math.abs(Math.hypot(x - 24, y - 24) - 14) < 1.5 ? BLACK : null));
+    expect(estimatePaper(disc, 48, 48)).toBeNull();
   });
 });
 
