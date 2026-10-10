@@ -1,0 +1,192 @@
+{
+ "themes": [
+  {
+   "id": "t-herfst",
+   "name": "Herfst",
+   "visible": true,
+   "sort": 1,
+   "created_at": "2026-10-01T00:00:00Z",
+   "updated_at": "2026-10-01T00:00:00Z"
+  },
+  {
+   "id": "t-klein",
+   "name": "Klein thema",
+   "visible": true,
+   "sort": 2,
+   "created_at": "2026-10-01T00:00:00Z",
+   "updated_at": "2026-10-01T00:00:00Z"
+  }
+ ],
+ "items": [
+  {
+   "id": "i-appel",
+   "theme_id": "t-herfst",
+   "word": "appel",
+   "picto_path": "themes/t-herfst/appel.png",
+   "audio_path": null,
+   "options": {},
+   "sort": 0,
+   "created_at": "2026-10-01T00:00:00Z"
+  },
+  {
+   "id": "i-peer",
+   "theme_id": "t-herfst",
+   "word": "peer",
+   "picto_path": "themes/t-herfst/peer.png",
+   "audio_path": null,
+   "options": {},
+   "sort": 1,
+   "created_at": "2026-10-01T00:00:00Z"
+  },
+  {
+   "id": "i-blad",
+   "theme_id": "t-herfst",
+   "word": "blad",
+   "picto_path": "themes/t-herfst/blad.png",
+   "audio_path": null,
+   "options": {},
+   "sort": 2,
+   "created_at": "2026-10-01T00:00:00Z"
+  },
+  {
+   "id": "i-boom",
+   "theme_id": "t-herfst",
+   "word": "boom",
+   "picto_path": "themes/t-herfst/boom.png",
+   "audio_path": null,
+   "options": {},
+   "sort": 3,
+   "created_at": "2026-10-01T00:00:00Z"
+  },
+  {
+   "id": "i-eikel",
+   "theme_id": "t-herfst",
+   "word": "eikel",
+   "picto_path": "themes/t-herfst/eikel.png",
+   "audio_path": null,
+   "options": {},
+   "sort": 4,
+   "created_at": "2026-10-01T00:00:00Z"
+  },
+  {
+   "id": "i-egel",
+   "theme_id": "t-herfst",
+   "word": "egel",
+   "picto_path": "themes/t-herfst/egel.png",
+   "audio_path": null,
+   "options": {},
+   "sort": 5,
+   "created_at": "2026-10-01T00:00:00Z"
+  },
+  {
+   "id": "i-laars",
+   "theme_id": "t-herfst",
+   "word": "laars",
+   "picto_path": "themes/t-herfst/laars.png",
+   "audio_path": null,
+   "options": {},
+   "sort": 6,
+   "created_at": "2026-10-01T00:00:00Z"
+  },
+  {
+   "id": "i-muts",
+   "theme_id": "t-herfst",
+   "word": "muts",
+   "picto_path": "themes/t-herfst/muts.png",
+   "audio_path": null,
+   "options": {},
+   "sort": 7,
+   "created_at": "2026-10-01T00:00:00Z"
+  },
+  {
+   "id": "i-paddenstoel",
+   "theme_id": "t-herfst",
+   "word": "paddenstoel",
+   "picto_path": "themes/t-herfst/paddenstoel.png",
+   "audio_path": null,
+   "options": {},
+   "sort": 8,
+   "created_at": "2026-10-01T00:00:00Z"
+  },
+  {
+   "id": "i-paraplu",
+   "theme_id": "t-herfst",
+   "word": "paraplu",
+   "picto_path": "themes/t-herfst/paraplu.png",
+   "audio_path": null,
+   "options": {},
+   "sort": 9,
+   "created_at": "2026-10-01T00:00:00Z"
+  },
+  {
+   "id": "i-pompoen",
+   "theme_id": "t-herfst",
+   "word": "pompoen",
+   "picto_path": "themes/t-herfst/pompoen.png",
+   "audio_path": null,
+   "options": {},
+   "sort": 10,
+   "created_at": "2026-10-01T00:00:00Z"
+  },
+  {
+   "id": "i-wolk",
+   "theme_id": "t-herfst",
+   "word": "wolk",
+   "picto_path": "themes/t-herfst/wolk.png",
+   "audio_path": null,
+   "options": {
+    "exclude": [
+     "shadow"
+    ]
+   },
+   "sort": 11,
+   "created_at": "2026-10-01T00:00:00Z"
+  },
+  {
+   "id": "k-appel",
+   "theme_id": "t-klein",
+   "word": "appel",
+   "picto_path": "themes/t-klein/appel.png",
+   "audio_path": null,
+   "options": {},
+   "sort": 0,
+   "created_at": "2026-10-01T00:00:00Z"
+  },
+  {
+   "id": "k-peer",
+   "theme_id": "t-klein",
+   "word": "peer",
+   "picto_path": "themes/t-klein/peer.png",
+   "audio_path": null,
+   "options": {},
+   "sort": 1,
+   "created_at": "2026-10-01T00:00:00Z"
+  }
+ ],
+ "games": [
+  {
+   "key": "shadow",
+   "kind": "theme",
+   "available": true,
+   "visible": true,
+   "sort": 1,
+   "settings": {}
+  },
+  {
+   "key": "same",
+   "kind": "theme",
+   "available": true,
+   "visible": true,
+   "sort": 2,
+   "settings": {}
+  },
+  {
+   "key": "listen",
+   "kind": "theme",
+   "available": true,
+   "visible": true,
+   "sort": 3,
+   "settings": {}
+  }
+ ]
+}

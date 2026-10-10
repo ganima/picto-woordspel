@@ -18,6 +18,12 @@ export const router = createRouter({
       component: () => import('@/views/student/GameMenu.vue'),
       props: true,
     },
+    {
+      path: '/thema/:themeId/:gameKey/:variant?',
+      name: 'play',
+      component: () => import('@/views/student/GamePlay.vue'),
+      props: true,
+    },
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue') },
     {
       path: '/beheer',

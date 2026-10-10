@@ -77,7 +77,7 @@ h2 { font-family: var(--font-display); font-weight: 800; font-size: 22px; margin
   padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; text-decoration: none;
 }
 .tile:active { transform: scale(0.98); }
-.tile .pc { width: min(70%, 140px); border-width: 3px; border-radius: 14px; padding: 6px; }
+.tile > .pc { width: min(70%, 140px); border-width: 3px; border-radius: 14px; padding: 6px; }
 .tn { font-family: var(--font-display); font-weight: 800; font-size: clamp(19px, 2.6vw, 24px); line-height: 1.05; }
 .ts { font-size: 14px; margin-top: -4px; }
 
@@ -99,3 +99,4 @@ input[type='text'], input[type='email'], input[type='password'], select {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+svg.i.f { fill: currentColor; stroke: none; }
