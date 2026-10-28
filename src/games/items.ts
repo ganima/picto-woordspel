@@ -14,7 +14,8 @@ interface ShadowInfo {
 
 const shadows = new Map<string, Promise<ShadowInfo>>();
 
-function shadowFor(path: string, url: string): Promise<ShadowInfo> {
+/** Shadow of the picto at `url`, remembered by its storage path. */
+export function shadowFor(path: string, url: string): Promise<ShadowInfo> {
   let p = shadows.get(path);
   if (!p) {
     p = loadImage(url)

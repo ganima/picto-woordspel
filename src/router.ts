@@ -32,6 +32,12 @@ export const router = createRouter({
       children: [
         { path: '', redirect: { name: 'staff-themes' } },
         { path: 'themas', name: 'staff-themes', component: () => import('@/views/staff/StaffThemes.vue') },
+        {
+          path: 'themas/:themeId',
+          name: 'staff-theme',
+          component: () => import('@/views/staff/StaffTheme.vue'),
+          props: true,
+        },
         { path: 'spelletjes', name: 'staff-games', component: () => import('@/views/staff/StaffGames.vue') },
         {
           path: 'personeel',

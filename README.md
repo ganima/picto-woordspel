@@ -33,7 +33,10 @@ The Cypress tests run against the real Supabase project. To also test a real sta
 | `/thema/<id>` | Students: the games this theme can feed, and its words (tap to hear) |
 | `/thema/<id>/<game>[/<variant>]` | Students: one game, then the "well done" screen |
 | `/login` | Juf and admin |
-| `/beheer/...` | Staff screens. `/beheer/personeel` is for admins only. |
+| `/beheer/themas` | Juf and admin: themes (create, order, visible for the class, delete) |
+| `/beheer/themas/<id>` | Juf and admin: a theme's pictos (bulk upload, word, shadow preview with warnings, per-game exclusion, order) and recordings |
+| `/beheer/spelletjes` | Juf and admin: which games the class sees |
+| `/beheer/personeel` | Admin only (phase 4) |
 
 ## Layout
 
@@ -62,6 +65,15 @@ Game rules for every game: no timers, no failure sounds, nothing that flashes; a
 - On open, and whenever the page becomes visible again, it refreshes from Supabase and downloads only files it doesn't have yet.
 - The service worker only runs in the production build (`npm run build && npm run preview`), not in `npm run dev`.
 
+## Picto uploads
+
+- An upload is fitted on a white 384×384 canvas and stored as PNG (`standardise` in `src/picto/canvas.ts`).
+- A photo or scan of a printed sheet is detected by its straight paper edge, and its paper is corrected to white first.
+- Coloured backgrounds are left alone; they get the "background is not white" warning instead.
+
 ## Tests without real data
+
+`cypress/support/fakeSupabase.ts` is an in-memory stand-in for the Supabase endpoints the app uses (password login, tables, the media bucket). Staff flows can be tested against it end to end.
+
 
 The student-flow Cypress tests (`cypress/e2e/student.cy.ts`) don't touch the real project. They answer Supabase requests from `cypress/fixtures/class.json`, and the pictos are the prototype's sample drawings in `cypress/fixtures/pictos/`.

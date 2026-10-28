@@ -10,6 +10,10 @@ export const AREA_MIN = 0.03;
 export const AREA_MAX = 0.9;
 /** How far (RGB distance) a pixel may be from the estimated paper colour and still count as background. */
 export const PAPER_TOLERANCE = 32;
+/** Paper must be at least this light in every channel… */
+export const PAPER_MIN_LIGHT = 140;
+/** …and at most this far between its strongest and weakest channel (a slight tint from the light is fine). */
+export const PAPER_MAX_TINT = 40;
 
 export interface Analysis {
   /** 1 = object (part of the shadow), 0 = background reachable from the border. */
@@ -81,6 +85,9 @@ export function estimatePaper(p: ArrayLike<number>, w: number, h: number): [numb
   const paper = [0, 1, 2].map((c) => median(samples.map((s) => s[c]!))) as [number, number, number];
   // Truly white already: nothing to correct. Lighter-than-near-white paper still counts, because its light is often uneven.
   if (paper.every((c) => c >= 250)) return null;
+  // Paper is light and nearly grey. A coloured background (a yellow card, a blue frame) is not paper: correcting
+  // it to white would wreck the picto's colours, so it is left alone and gets the "background is not white" warning.
+  if (Math.min(...paper) < PAPER_MIN_LIGHT || Math.max(...paper) - Math.min(...paper) > PAPER_MAX_TINT) return null;
   const close = samples.filter((s) => distance(s, paper) < PAPER_TOLERANCE).length;
   return close >= samples.length * 0.6 ? paper : null;
 }

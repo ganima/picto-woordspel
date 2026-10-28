@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('./offline', () => ({ getBlob: async () => null }));
+vi.mock('./supabase', () => ({ mediaUrl: (p: string) => p }));
 const { trimBounds } = await import('./audio');
 
 describe('trimBounds', () => {

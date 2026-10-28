@@ -2,6 +2,7 @@
 // ends trimmed, a soft two-note ding, and a Dutch computer voice when there is no recording.
 
 import { getBlob } from './offline';
+import { mediaUrl } from './supabase';
 import { settings } from './settings';
 
 const SILENCE = 0.02;
@@ -73,7 +74,8 @@ function decode(path: string): Promise<Clip | null> {
   if (!p) {
     p = (async () => {
       const a = audioContext();
-      const blob = await getBlob(path);
+      // Cached on the device for the class; staff previews and new recordings come from the network.
+      const blob = (await getBlob(path)) ?? (await fetch(mediaUrl(path)).then((r) => (r.ok ? r.blob() : null)));
       if (!a || !blob) return null;
       const buffer = await a.decodeAudioData(await blob.arrayBuffer());
       return { buffer, ...trimBounds(buffer.getChannelData(0), buffer.sampleRate) };

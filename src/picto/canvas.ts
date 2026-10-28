@@ -24,7 +24,8 @@ export function fitOnWhite(src: CanvasImageSource & { width: number; height: num
   x.fillRect(0, 0, SIZE, SIZE);
   const iw = (src as HTMLImageElement).naturalWidth || src.width;
   const ih = (src as HTMLImageElement).naturalHeight || src.height;
-  const r = fitRect(iw, ih);
+  // Stored pictos are already standardised; fitting them again would add a second margin and shrink the shadow.
+  const r = iw === SIZE && ih === SIZE ? { x: 0, y: 0, w: SIZE, h: SIZE } : fitRect(iw, ih);
   x.imageSmoothingQuality = 'high';
   x.drawImage(src, r.x, r.y, r.w, r.h);
   return c;

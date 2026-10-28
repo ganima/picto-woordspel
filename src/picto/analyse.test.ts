@@ -69,6 +69,16 @@ describe('photographed paper', () => {
     expect([...p.slice(o, o + 3)]).toEqual([255, 255, 255]);
   });
 
+  it('does not take a coloured background for paper', () => {
+    // 1 px margin on 48 px, about the app's 8 px on 384 px.
+    const yellow = image(48, 48, (x, y) => {
+      if (x < 1 || y < 1 || x >= 47 || y >= 47) return null;
+      return x >= 19 && x < 29 && y >= 19 && y < 29 ? BLACK : [250, 215, 30, 255];
+    });
+    expect(estimatePaper(yellow, 48, 48)).toBeNull();
+    expect(shadowFlag(analysePixels(yellow, 48, 48).area)).toBe('background');
+  });
+
   it('leaves clean white pictos and objects touching the edge to the near-white rule', () => {
     expect(estimatePaper(image(20, 20, () => null), 20, 20)).toBeNull();
     const colours = [BLACK, [200, 30, 30, 255], [40, 160, 60, 255], [240, 200, 40, 255], [60, 90, 200, 255]];
